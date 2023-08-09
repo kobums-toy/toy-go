@@ -59,7 +59,9 @@ func (c *UserController) Index(page int, pagesize int) {
         // if page != 0 && pagesize != 0 {
             orderby = "id desc"
         // }
-    }
+    } else {
+		orderby = ""
+	}
 
     if orderby != "" {
         args = append(args, models.Ordering(orderby))
@@ -86,4 +88,43 @@ func (c *UserController) Read(id int64) {
 	item := manager.Get(id)
 
     c.Set("item", item)
+}
+
+
+func (c *UserController) Insert(item *models.User) {
+    
+	conn := c.NewConnection()
+    
+	manager := models.NewUserManager(conn)
+	manager.Insert(item)
+
+    id := manager.GetIdentity()
+    c.Result["id"] = id
+    item.Id = id
+}
+
+func (c *UserController) Update(item *models.User) {
+    
+    if c.Session == nil {
+        c.Result["code"] = "auth error"
+        return
+    }
+    
+	conn := c.NewConnection()
+
+	manager := models.NewUserManager(conn)
+	manager.Update(item)
+}
+
+func (c *UserController) Delete(item *models.User) {
+    
+    if c.Session == nil {
+        c.Result["code"] = "auth error"
+        return
+    }
+    
+	conn := c.NewConnection()
+
+	manager := models.NewUserManager(conn)
+	manager.Delete(item.Id)
 }
