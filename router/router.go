@@ -15,11 +15,12 @@ func SetRouter(r *fiber.App) {
 	// apiGroup.Use()
 	{
 		apiGroup.Get("/user/:id", func(c *fiber.Ctx) error {
-			// id_, _ := strconv.ParseInt(c.Params("id"), 10, 64)
-			return c.Status(200).JSON(fiber.Map{
-				"code": "ok",
-				"data": "hi user/${id_}",
-			})
+			id_, _ := strconv.ParseInt(c.Params("id"), 10, 64)
+			var controller rest.UserController
+			controller.Init(c)
+			controller.Read(id_)
+			controller.Close()
+			return c.JSON(controller.Result)
 		})
 
 		apiGroup.Get("/user", func(c *fiber.Ctx) error {

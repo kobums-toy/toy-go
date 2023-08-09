@@ -71,3 +71,19 @@ func (c *UserController) Index(page int, pagesize int) {
     total := manager.Count(args)
 	c.Set("total", total)
 }
+
+
+func (c *UserController) Read(id int64) {
+    
+    // if c.Session == nil {
+    //     c.Result["code"] = "auth error"
+    //     return
+    // }
+    
+	conn := c.NewConnection()
+
+	manager := models.NewUserManager(conn)
+	item := manager.Get(id)
+
+    c.Set("item", item)
+}
