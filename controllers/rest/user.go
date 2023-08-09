@@ -118,10 +118,10 @@ func (c *UserController) Update(item *models.User) {
 
 func (c *UserController) Delete(item *models.User) {
     
-    if c.Session == nil {
-        c.Result["code"] = "auth error"
-        return
-    }
+    // if c.Session == nil {
+    //     c.Result["code"] = "auth error"
+    //     return
+    // }
     
 	conn := c.NewConnection()
 

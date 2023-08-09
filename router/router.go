@@ -63,7 +63,17 @@ func SetRouter(r *fiber.App) {
 		})
 
 		apiGroup.Delete("/user", func(ctx *fiber.Ctx) error {
-			return ctx.SendString("Hello, delete user")
+			item_ := &models.User{}
+			ctx.BodyParser(item_)
+			var controller rest.UserController
+			controller.Init(ctx)
+			if item_ != nil {
+				controller.Delete(item_)
+			} else {
+			    controller.Result["code"] = "error"
+			}
+			controller.Close()
+			return ctx.JSON(controller.Result)
 		})
 	}
 }
