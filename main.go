@@ -1,13 +1,16 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"log"
+	"project/router"
+
+	"github.com/gofiber/fiber/v2"
+)
 
 func main() {
-	app := fiber.New()
+	r := fiber.New()
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
+	router.SetRouter(r)
 
-	app.Listen(":3000")
+	log.Fatal(r.Listen(":9003"))
 }
