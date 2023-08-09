@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"project/models"
 	"project/router"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,6 +10,8 @@ import (
 
 func main() {
 	r := fiber.New()
+
+	models.InitCache()
 
 	router.SetRouter(r)
 

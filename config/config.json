@@ -1,0 +1,10 @@
+{
+  "database": "",
+  "connectionString": "",
+
+  "MailSender": "",
+  "MailHost": "",
+  "MailPort": "",
+  "MailUser": "",
+  "MailPasswd": ""
+}
