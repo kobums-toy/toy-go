@@ -9,51 +9,44 @@ type UserController struct {
 	controllers.Controller
 }
 
-
 func (c *UserController) Index(page int, pagesize int) {
-    
-    // if c.Session == nil {
-    //     c.Result["code"] = "auth error"
-    //     return
-    // }
-    
 	conn := c.NewConnection()
 
 	manager := models.NewUserManager(conn)
 
     var args []interface{}
-    
-    _name := c.Query("name")
-    if _name != "" {
-        args = append(args, models.Where{Column:"name", Value:_name, Compare:"="})
-        
+
+    name := c.Query("name")
+    if name != "" {
+        args = append(args, models.Where{Column:"name", Value:name, Compare:"="})
     }
-    _passwd := c.Query("passwd")
-    if _passwd != "" {
-        args = append(args, models.Where{Column:"passwd", Value:_passwd, Compare:"like"})
+
+    passwd := c.Query("passwd")
+    if passwd != "" {
+        args = append(args, models.Where{Column:"passwd", Value:passwd, Compare:"like"})
     }
-    
-    _email := c.Query("email")
-    if _email != "" {
-        args = append(args, models.Where{Column:"email", Value:_email, Compare:"like"})
+
+    email := c.Query("email")
+    if email != "" {
+        args = append(args, models.Where{Column:"email", Value:email, Compare:"like"})
     }
-    _startdate := c.Query("startdate")
-    _enddate := c.Query("enddate")
-    if _startdate != "" && _enddate != "" {        
+    startdate := c.Query("startdate")
+    enddate := c.Query("enddate")
+    if startdate != "" && enddate != "" {
         var v [2]string
-        v[0] = _startdate
-        v[1] = _enddate  
-        args = append(args, models.Where{Column:"date", Value:v, Compare:"between"})    
-    } else if  _startdate != "" {          
-        args = append(args, models.Where{Column:"date", Value:_startdate, Compare:">="})
-    } else if  _enddate != "" {          
-        args = append(args, models.Where{Column:"date", Value:_enddate, Compare:"<="})            
+        v[0] = startdate
+        v[1] = enddate
+        args = append(args, models.Where{Column:"date", Value:v, Compare:"between"})
+    } else if  startdate != "" {
+        args = append(args, models.Where{Column:"date", Value:startdate, Compare:">="})
+    } else if  enddate != "" {
+        args = append(args, models.Where{Column:"date", Value:enddate, Compare:"<="})
     }
     
     if page != 0 && pagesize != 0 {
         args = append(args, models.Paging(page, pagesize))
     }
-    
+
     orderby := c.Query("orderby")
     if orderby == "desc" {
         // if page != 0 && pagesize != 0 {
@@ -66,7 +59,7 @@ func (c *UserController) Index(page int, pagesize int) {
     if orderby != "" {
         args = append(args, models.Ordering(orderby))
     }
-    
+
 	items := manager.Find(args)
 	c.Set("items", items)
 
@@ -74,14 +67,7 @@ func (c *UserController) Index(page int, pagesize int) {
 	c.Set("total", total)
 }
 
-
 func (c *UserController) Read(id int64) {
-    
-    // if c.Session == nil {
-    //     c.Result["code"] = "auth error"
-    //     return
-    // }
-    
 	conn := c.NewConnection()
 
 	manager := models.NewUserManager(conn)
@@ -90,11 +76,9 @@ func (c *UserController) Read(id int64) {
     c.Set("item", item)
 }
 
-
 func (c *UserController) Insert(item *models.User) {
-    
 	conn := c.NewConnection()
-    
+
 	manager := models.NewUserManager(conn)
 	manager.Insert(item)
 
@@ -104,12 +88,6 @@ func (c *UserController) Insert(item *models.User) {
 }
 
 func (c *UserController) Update(item *models.User) {
-    
-    // if c.Session == nil {
-    //     c.Result["code"] = "auth error"
-    //     return
-    // }
-    
 	conn := c.NewConnection()
 
 	manager := models.NewUserManager(conn)
@@ -117,12 +95,6 @@ func (c *UserController) Update(item *models.User) {
 }
 
 func (c *UserController) Delete(item *models.User) {
-    
-    // if c.Session == nil {
-    //     c.Result["code"] = "auth error"
-    //     return
-    // }
-    
 	conn := c.NewConnection()
 
 	manager := models.NewUserManager(conn)

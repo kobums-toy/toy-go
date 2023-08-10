@@ -9,11 +9,13 @@ import (
 )
 
 func SetRouter(r *fiber.App) {
-	r.Get("/api/jwt", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
+	r.Get("/api/jwt", func(ctx *fiber.Ctx) error {
+		email := ctx.Query("email")
+		passwd := ctx.Query("passwd")
+		return ctx.JSON(JwtAuth(email, passwd))
 	})
 	apiGroup := r.Group("/api")
-	// apiGroup.Use()
+	apiGroup.Use(JwtAuthRequired())
 	{
 		apiGroup.Get("/user/:id", func(ctx *fiber.Ctx) error {
 			id_, _ := strconv.ParseInt(ctx.Params("id"), 10, 64)

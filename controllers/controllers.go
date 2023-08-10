@@ -26,22 +26,21 @@ type Controller struct {
 	Pagesize int
 }
 
-
-func NewController(f *fiber.Ctx) *Controller {
+func NewController(ctx *fiber.Ctx) *Controller {
 	var ctl Controller
-	ctl.Init(f)
+	ctl.Init(ctx)
 	return &ctl
 }
 
-func (c *Controller) Init(f *fiber.Ctx) {
-	c.Context = f
+func (c *Controller) Init(ctx *fiber.Ctx) {
+	c.Context = ctx
 	c.Vars = make(jet.VarMap)
 	c.Result = make(fiber.Map)
 	c.Result["code"] = "ok"
 	c.Connection = c.NewConnection()
 	c.Code = http.StatusOK
 
-	user, ok := f.Locals("user").(*models.User)
+	user, ok := ctx.Locals("user").(*models.User)
 
 	if ok {
 		c.Session = user
@@ -58,16 +57,6 @@ func (c *Controller) Set(name string, value interface{}) {
 	c.Result[name] = value
 }
 
-
-func (c *Controller) Get(name string) string {
-	if c.Context.Request().Header.String() == "GET" {
-		return c.Query(name)
-	} else {
-		return c.Post(name)
-	}
-}
-
-
 func (c *Controller) Post(name string) string {
 	return c.Context.FormValue(name)
 }
@@ -81,11 +70,9 @@ func (c *Controller) NewConnection() *sql.DB {
 	return c.Connection
 }
 
-
 func (c *Controller) Query(name string) string {
 	return c.Context.Query(name)
 }
-
 
 func (c *Controller) Close() {
 	if c.Connection != nil {

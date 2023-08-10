@@ -3,12 +3,9 @@ package models
 import (
 	"database/sql"
 	"log"
-	"os"
+	"project/config"
 	"time"
-
-	"github.com/joho/godotenv"
 )
-
 
 type PagingType struct {
 	Page		int
@@ -36,7 +33,6 @@ type Where struct {
 	Compare		string
 }
 
-
 func Paging(page int , pagesize int) PagingType {
 	return PagingType{Page: page, Pagesize: pagesize}
 }
@@ -50,12 +46,7 @@ func Limit(limit int) LimitType {
 }
 
 func GetConnection() *sql.DB {
-	err := godotenv.Load()
-  	if err != nil {
-    	log.Fatal("Error loading .env file")
-  	}
-  
-	r1, err := sql.Open(os.Getenv("DATABASE"),os.Getenv("DATABASE_URL"))
+	r1, err := sql.Open(config.Database, config.ConnectionString)
 	if err != nil {
 		log.Println("Database Connect Error")
 		return nil
