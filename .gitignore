@@ -1,0 +1,7 @@
+
+# bin file
+/bin
+
+
+# local env file
+.env
