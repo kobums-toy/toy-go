@@ -8,13 +8,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetRouter(r *fiber.App) {
-	r.Get("/api/jwt", func(ctx *fiber.Ctx) error {
+func SetRouter(app *fiber.App) {
+	app.Get("/api/jwt", func(ctx *fiber.Ctx) error {
 		email := ctx.Query("email")
 		passwd := ctx.Query("passwd")
 		return ctx.JSON(JwtAuth(email, passwd))
 	})
-	apiGroup := r.Group("/api")
+	apiGroup := app.Group("/api")
 	apiGroup.Use(JwtAuthRequired())
 	{
 		apiGroup.Get("/user/:id", func(ctx *fiber.Ctx) error {

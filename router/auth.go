@@ -53,10 +53,7 @@ func JwtAuthRequired() fiber.Handler {
 			log.Println("Jwt header not found")
 		}
 
-		c.Status(http.StatusUnauthorized)
-		c.Set("Content-Type", "application/json")
-
-		return c.JSON(map[string]string{
+		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
 			"code":"error",
 			"message":"not auth",
 		})
