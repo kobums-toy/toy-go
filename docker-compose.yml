@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  backend:
+    restart: always
+    image: kobums/gofiber
+    ports:
+      - "9003:9003"
+    volumes:
+      - /home/gofiber/webdata:/usr/local/main/webdata
