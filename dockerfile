@@ -9,7 +9,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-s' -o bin/gofib
 FROM        alpine
 
 COPY --from=builder /app/bin/gofiber.linux /usr/local/main/main
-COPY ./config/config.json /usr/local/main/config/config.json
+COPY ./config/config.json.docker /usr/local/main/config/config.json
 CMD mkdir -p /usr/local/main/webdata
 #ADD ./assets /usr/local/main/assets
 #ADD ./views /usr/local/main/views
