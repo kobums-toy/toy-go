@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/viper"
 )
@@ -17,6 +18,8 @@ var (
 )
 
 func init() {
+	log.Println("new one")
+
 	UploadPath = "webdata"
 	Database = "mysql"
 	Port = "9003"
