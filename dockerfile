@@ -1,3 +1,8 @@
+FROM golang:1.21 AS builder
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-s' -o bin/gofiber.linux main.go
+
+
 FROM        alpine
 
 COPY ./bin/gofiber.linux /usr/local/main/main
