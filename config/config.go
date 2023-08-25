@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/viper"
 )
@@ -64,7 +63,4 @@ func init() {
 	if value := viper.Get("uploadPath"); value != nil {
 		UploadPath = value.(string)
 	}
-
-
-	log.Println(ConnectionString)
 }
