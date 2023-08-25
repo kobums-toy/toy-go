@@ -1,6 +1,6 @@
 FROM        alpine
 
-COPY ./bin/gofiber.linux /usr/local/main/main
+# COPY ./bin/gofiber.linux /usr/local/main/main
 COPY ./config/config.json /usr/local/main/config/config.json
 CMD mkdir -p /usr/local/main/webdata
 #ADD ./assets /usr/local/main/assets
