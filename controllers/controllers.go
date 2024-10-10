@@ -3,9 +3,9 @@ package controllers
 import (
 	"database/sql"
 	"net/http"
-	"project/global"
-	"project/models"
 	"time"
+	"toysgo/global"
+	"toysgo/models"
 
 	"github.com/CloudyKit/jet/v3"
 	"github.com/gofiber/fiber/v2"

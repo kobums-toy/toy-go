@@ -3,17 +3,17 @@ package models
 import (
 	"database/sql"
 	"log"
-	"project/config"
 	"time"
+	"toysgo/config"
 )
 
 type PagingType struct {
-	Page		int
-	Pagesize	int
+	Page     int
+	Pagesize int
 }
 
 type OrderingType struct {
-	Order 		string
+	Order string
 }
 
 type LimitType struct {
@@ -21,19 +21,19 @@ type LimitType struct {
 }
 
 type OptionType struct {
-	Page		int
-	Pagesize	int
-	Order		string
-	Limit		int
+	Page     int
+	Pagesize int
+	Order    string
+	Limit    int
 }
 
 type Where struct {
-	Column		string
-	Value		interface{}
-	Compare		string
+	Column  string
+	Value   interface{}
+	Compare string
 }
 
-func Paging(page int , pagesize int) PagingType {
+func Paging(page int, pagesize int) PagingType {
 	return PagingType{Page: page, Pagesize: pagesize}
 }
 
@@ -58,7 +58,6 @@ func GetConnection() *sql.DB {
 
 	return r1
 }
-
 
 func NewConnection() *sql.DB {
 	db := GetConnection()

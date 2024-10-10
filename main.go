@@ -1,9 +1,9 @@
 package main
 
 import (
-	"project/router"
 	"strings"
 	"time"
+	"toysgo/router"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -20,14 +20,14 @@ func main() {
 
 	app := fiber.New()
 	app.Use(logger.New(logger.Config{
-		Format: "[${time}] | ${status} | ${latency} | ${ip}:${port} | ${method} | ${url}\n",
+		Format:     "[${time}] | ${status} | ${latency} | ${ip}:${port} | ${method} | ${url}\n",
 		TimeFormat: time.DateTime,
 	}))
 
 	app.Use(cors.New(cors.Config{
-		AllowHeaders: "Origin, Content-Type, Authorization, Accept",
+		AllowHeaders:     "Origin, Content-Type, Authorization, Accept",
 		AllowCredentials: true,
-		AllowOrigins: "http://141.164.56.77:3000, http://localhost:3000",
+		AllowOrigins:     "http://140.82.12.99:3000, http://localhost:3000",
 		AllowMethods: strings.Join([]string{
 			fiber.MethodGet,
 			fiber.MethodPost,

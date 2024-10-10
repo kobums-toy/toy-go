@@ -1,7 +1,7 @@
 package models
 
 import (
-	"project/config"
+	"toysgo/config"
 
 	"database/sql"
 	"errors"
@@ -13,21 +13,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
 type Auth struct {
-	Id					int64 `json:"id"`
-	User			int64 `json:"user"`
-	Token				string `json:"token"`
-	Date				string `json:"date"`
+	Id    int64  `json:"id"`
+	User  int64  `json:"user"`
+	Token string `json:"token"`
+	Date  string `json:"date"`
 
-	Extra				map[string]interface{} `json:"extra"`
+	Extra map[string]interface{} `json:"extra"`
 }
 
 type AuthManager struct {
-	Conn	*sql.DB
-	Tx		*sql.Tx
-	Result	*sql.Result
-	Index	string
+	Conn   *sql.DB
+	Tx     *sql.Tx
+	Result *sql.Result
+	Index  string
 }
 
 func (c *Auth) AddExtra(key string, value interface{}) {
@@ -48,7 +47,7 @@ func NewAuthManager(conn interface{}) *AuthManager {
 			item.Conn = nil
 		}
 	}
-	
+
 	item.Index = ""
 	return &item
 }
@@ -75,7 +74,7 @@ func (p *AuthManager) Query(query string, params ...interface{}) (*sql.Rows, err
 	if p.Conn != nil {
 		return p.Conn.Query(query, params...)
 	} else {
-		return p.Tx.Query(query + " FOR UPDATE", params...)
+		return p.Tx.Query(query+" FOR UPDATE", params...)
 	}
 }
 
@@ -92,7 +91,7 @@ func (p *AuthManager) GetQeury() string {
 
 	ret += "where 1=1 "
 
-	return ret;
+	return ret
 }
 
 func (p *AuthManager) GetQeurySelect() string {
@@ -106,7 +105,7 @@ func (p *AuthManager) GetQeurySelect() string {
 		ret = str + " use index(" + p.Index + ") "
 	}
 
-	return ret;
+	return ret
 }
 
 func (p *AuthManager) Truncate() error {
@@ -137,10 +136,10 @@ func (p *AuthManager) Insert(item *Auth) error {
 	var err error
 	if item.Id > 0 {
 		query = "insert into auth_tb (a_id, a_user, a_token, a_date) values (?, ?, ?, ?)"
-		res, err = p.Exec(query , item.Id, item.User, item.Token, item.Date)
+		res, err = p.Exec(query, item.Id, item.User, item.Token, item.Date)
 	} else {
 		query = "insert into auth_tb (a_user, a_token, a_date) values (?, ?, ?)"
-		res, err = p.Exec(query , item.User, item.Token, item.Date)
+		res, err = p.Exec(query, item.User, item.Token, item.Date)
 	}
 
 	if err == nil {
@@ -194,9 +193,7 @@ func (p *AuthManager) GetIdentity() int64 {
 }
 
 func (p *Auth) InitExtra() {
-	p.Extra = map[string]interface{}{
-
-	}
+	p.Extra = map[string]interface{}{}
 }
 
 func (p *AuthManager) ReadRow(rows *sql.Rows) *Auth {
@@ -279,7 +276,7 @@ func (p *AuthManager) Count(args []interface{}) int {
 			} else {
 				query += " and a_" + item.Column + " " + item.Compare + " ?"
 				if item.Compare == "like" {
-					params = append(params, "%" + item.Value.(string) + "%")
+					params = append(params, "%"+item.Value.(string)+"%")
 				} else {
 					params = append(params, item.Value)
 				}
@@ -364,7 +361,7 @@ func (p *AuthManager) Find(args []interface{}) *[]Auth {
 			} else {
 				query += " and a_" + item.Column + " " + item.Compare + " ?"
 				if item.Compare == "like" {
-					params = append(params, "%" + item.Value.(string) + "%")
+					params = append(params, "%"+item.Value.(string)+"%")
 				} else {
 					params = append(params, item.Value)
 				}
@@ -372,7 +369,7 @@ func (p *AuthManager) Find(args []interface{}) *[]Auth {
 		}
 	}
 
-	startpage := (page -1) * pagesize
+	startpage := (page - 1) * pagesize
 
 	if page > 0 && pagesize > 0 {
 		if orderby == "" {
@@ -413,15 +410,15 @@ func (p *AuthManager) Find(args []interface{}) *[]Auth {
 }
 
 func (p *AuthManager) GetByUser(user int64, args ...interface{}) *Auth {
-    if user != 0 {
-        args = append(args, Where{Column:"user", Value:user, Compare:"="})        
-    }
-    
-    items := p.Find(args)
+	if user != 0 {
+		args = append(args, Where{Column: "user", Value: user, Compare: "="})
+	}
 
-    if items != nil && len(*items) > 0 {
-        return &(*items)[0]
-    } else {
-        return nil
-    }
+	items := p.Find(args)
+
+	if items != nil && len(*items) > 0 {
+		return &(*items)[0]
+	} else {
+		return nil
+	}
 }

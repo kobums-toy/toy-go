@@ -1,7 +1,7 @@
 package models
 
 import (
-	"project/config"
+	"toysgo/config"
 
 	"database/sql"
 	"errors"
@@ -13,22 +13,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
 type User struct {
-	Id					int64 `json:"id"`
-	Passwd				string `json:"passwd"`
-	Name				string `json:"name"`
-	Email				string `json:"email"`
-	Date				string `json:"date"`
+	Id     int64  `json:"id"`
+	Passwd string `json:"passwd"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Date   string `json:"date"`
 
-	Extra				map[string]interface{} `json:"extra"`
+	Extra map[string]interface{} `json:"extra"`
 }
 
 type UserManager struct {
-	Conn	*sql.DB
-	Tx		*sql.Tx
-	Result	*sql.Result
-	Index	string
+	Conn   *sql.DB
+	Tx     *sql.Tx
+	Result *sql.Result
+	Index  string
 }
 
 func (c *User) AddExtra(key string, value interface{}) {
@@ -49,7 +48,7 @@ func NewUserManager(conn interface{}) *UserManager {
 			item.Conn = nil
 		}
 	}
-	
+
 	item.Index = ""
 	return &item
 }
@@ -76,7 +75,7 @@ func (p *UserManager) Query(query string, params ...interface{}) (*sql.Rows, err
 	if p.Conn != nil {
 		return p.Conn.Query(query, params...)
 	} else {
-		return p.Tx.Query(query + " FOR UPDATE", params...)
+		return p.Tx.Query(query+" FOR UPDATE", params...)
 	}
 }
 
@@ -93,7 +92,7 @@ func (p *UserManager) GetQeury() string {
 
 	ret += "where 1=1 "
 
-	return ret;
+	return ret
 }
 
 func (p *UserManager) GetQeurySelect() string {
@@ -107,7 +106,7 @@ func (p *UserManager) GetQeurySelect() string {
 		ret = str + " use index(" + p.Index + ") "
 	}
 
-	return ret;
+	return ret
 }
 
 func (p *UserManager) Truncate() error {
@@ -136,10 +135,10 @@ func (p *UserManager) Insert(item *User) error {
 	var err error
 	if item.Id > 0 {
 		query = "insert into user_tb (u_id, u_passwd, u_name, u_email, u_date) values (?, ?, ?, ?, ?)"
-		res, err = p.Exec(query , item.Id, item.Passwd, item.Name, item.Email, item.Date)
+		res, err = p.Exec(query, item.Id, item.Passwd, item.Name, item.Email, item.Date)
 	} else {
 		query = "insert into user_tb (u_passwd, u_name, u_email, u_date) values (?, ?, ?, ?)"
-		res, err = p.Exec(query , item.Passwd, item.Name, item.Email, item.Date)
+		res, err = p.Exec(query, item.Passwd, item.Name, item.Email, item.Date)
 	}
 
 	if err == nil {
@@ -189,9 +188,7 @@ func (p *UserManager) GetIdentity() int64 {
 }
 
 func (p *User) InitExtra() {
-	p.Extra = map[string]interface{}{
-
-	}
+	p.Extra = map[string]interface{}{}
 }
 
 func (p *UserManager) ReadRow(rows *sql.Rows) *User {
@@ -274,7 +271,7 @@ func (p *UserManager) Count(args []interface{}) int {
 			} else {
 				query += " and u_" + item.Column + " " + item.Compare + " ?"
 				if item.Compare == "like" {
-					params = append(params, "%" + item.Value.(string) + "%")
+					params = append(params, "%"+item.Value.(string)+"%")
 				} else {
 					params = append(params, item.Value)
 				}
@@ -359,7 +356,7 @@ func (p *UserManager) Find(args []interface{}) *[]User {
 			} else {
 				query += " and u_" + item.Column + " " + item.Compare + " ?"
 				if item.Compare == "like" {
-					params = append(params, "%" + item.Value.(string) + "%")
+					params = append(params, "%"+item.Value.(string)+"%")
 				} else {
 					params = append(params, item.Value)
 				}
@@ -367,7 +364,7 @@ func (p *UserManager) Find(args []interface{}) *[]User {
 		}
 	}
 
-	startpage := (page -1) * pagesize
+	startpage := (page - 1) * pagesize
 
 	if page > 0 && pagesize > 0 {
 		if orderby == "" {
@@ -408,15 +405,15 @@ func (p *UserManager) Find(args []interface{}) *[]User {
 }
 
 func (p *UserManager) GetByEmail(email string, args ...interface{}) *User {
-    if email != "" {
-        args = append(args, Where{Column:"email", Value:email, Compare:"="})        
-    }
-    
-    items := p.Find(args)
+	if email != "" {
+		args = append(args, Where{Column: "email", Value: email, Compare: "="})
+	}
 
-    if items != nil && len(*items) > 0 {
-        return &(*items)[0]
-    } else {
-        return nil
-    }
+	items := p.Find(args)
+
+	if items != nil && len(*items) > 0 {
+		return &(*items)[0]
+	} else {
+		return nil
+	}
 }

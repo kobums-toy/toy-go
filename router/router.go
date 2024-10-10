@@ -1,9 +1,9 @@
 package router
 
 import (
-	"project/controllers/rest"
-	"project/models"
 	"strconv"
+	"toysgo/controllers/rest"
+	"toysgo/models"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -53,7 +53,7 @@ func SetRouter(app *fiber.App) {
 			if item_ != nil {
 				controller.Insert(item_)
 			} else {
-			    controller.Result["code"] = "error"
+				controller.Result["code"] = "error"
 			}
 			controller.Close()
 			return ctx.JSON(controller.Result)
@@ -67,7 +67,7 @@ func SetRouter(app *fiber.App) {
 			if item_ != nil {
 				controller.Update(item_)
 			} else {
-			    controller.Result["code"] = "error"
+				controller.Result["code"] = "error"
 			}
 			controller.Close()
 			return ctx.JSON(controller.Result)
@@ -81,7 +81,7 @@ func SetRouter(app *fiber.App) {
 			if item_ != nil {
 				controller.Delete(item_)
 			} else {
-			    controller.Result["code"] = "error"
+				controller.Result["code"] = "error"
 			}
 			controller.Close()
 			return ctx.JSON(controller.Result)
