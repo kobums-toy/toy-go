@@ -7,13 +7,11 @@ import (
 )
 
 var (
-	Database			string
-	ConnectionString	string
-	SecretCode			string
-
-	Port				string
-
-	UploadPath			string
+	Database         string
+	ConnectionString string
+	SecretCode       string
+	Port             string
+	UploadPath       string
 )
 
 func init() {
@@ -21,17 +19,15 @@ func init() {
 	Database = "mysql"
 	Port = "9003"
 
-
 	// err := godotenv.Load()
 
-  	// if err != nil {
-    // 	log.Fatal("Error loading .env file")
-  	// }
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// }
 
 	// Database = os.Getenv("DATABASE")
 	// ConnectionString = os.Getenv("DATABASE_URL")
 	// SecretCode = os.Getenv("SECRET_CODE")
-
 
 	viper.SetConfigType("json")
 	viper.SetConfigName("config")

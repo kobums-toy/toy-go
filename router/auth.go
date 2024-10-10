@@ -4,12 +4,12 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"project/config"
-	"project/models"
 	"time"
+	"toysgo/config"
+	"toysgo/models"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/gofiber/fiber/v2"
 )
 
 type AuthTokenClaims struct {
@@ -18,8 +18,8 @@ type AuthTokenClaims struct {
 }
 
 type RefreshTokenClaims struct {
-	UserId int64 `json:"user_id"`
-	Email string `json:"email"`
+	UserId int64  `json:"user_id"`
+	Email  string `json:"email"`
 	jwt.RegisteredClaims
 }
 
@@ -27,7 +27,7 @@ func JwtAuthRequired() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var token string
 
-		if ((c.Method() == fiber.MethodPost) && c.Path() == "/api/user") {
+		if (c.Method() == fiber.MethodPost) && c.Path() == "/api/user" {
 			return c.Next()
 		}
 
@@ -60,8 +60,8 @@ func JwtAuthRequired() fiber.Handler {
 		}
 
 		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
-			"code":"error",
-			"message":"not auth",
+			"code":    "error",
+			"message": "not auth",
 		})
 	}
 }
@@ -99,7 +99,7 @@ func JwtAuth(email string, passwd string) fiber.Map {
 
 	rt := RefreshTokenClaims{
 		UserId: user.Id,
-		Email: user.Email,
+		Email:  user.Email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			// ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
@@ -113,7 +113,7 @@ func JwtAuth(email string, passwd string) fiber.Map {
 	signedRefreshToken, _ := rtoken.SignedString([]byte(config.SecretCode))
 
 	refreshTokenItem := models.Auth{
-		User: user.Id,
+		User:  user.Id,
 		Token: signedRefreshToken,
 	}
 
@@ -126,123 +126,121 @@ func JwtAuth(email string, passwd string) fiber.Map {
 
 	user.Passwd = ""
 	return fiber.Map{
-		"code":  "ok",
-		"accessToken": signedAuthToken,
+		"code":         "ok",
+		"accessToken":  signedAuthToken,
 		"refreshToken": signedRefreshToken,
 	}
 }
 
 func JwtToken(refreshToken string) fiber.Map {
-		values := refreshToken
-		if values != "" {
-			str := values
+	values := refreshToken
+	if values != "" {
+		str := values
 
-			if len(str) > 7 && str[:7] == "Bearer " {
-				refreshToken = str[7:]
+		if len(str) > 7 && str[:7] == "Bearer " {
+			refreshToken = str[7:]
 
-				claims := RefreshTokenClaims{}
-				key := func(token *jwt.Token) (interface{}, error) {
-					if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-						return nil, errors.New("Unexpected Signing Method")
-					}
-					return []byte(config.SecretCode), nil
+			claims := RefreshTokenClaims{}
+			key := func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, errors.New("Unexpected Signing Method")
 				}
+				return []byte(config.SecretCode), nil
+			}
 
-				_, err := jwt.ParseWithClaims(refreshToken, &claims, key)
-				if err == nil {
-					conn := models.NewConnection()
+			_, err := jwt.ParseWithClaims(refreshToken, &claims, key)
+			if err == nil {
+				conn := models.NewConnection()
 
-					manager := models.NewUserManager(conn)
-					user := manager.GetByEmail((claims.Email))
+				manager := models.NewUserManager(conn)
+				user := manager.GetByEmail((claims.Email))
 
-					authManager := models.NewAuthManager((conn))
-					auth := authManager.GetByUser((claims.UserId))
+				authManager := models.NewAuthManager((conn))
+				auth := authManager.GetByUser((claims.UserId))
 
-					if auth == nil {
-						return fiber.Map{
-							"code":    "error",
-							"message": "token not found",
-						}
-					}
-
-					if auth.Token != refreshToken {
-						return nil
-					}
-
-					if user == nil {
-						return fiber.Map{
-							"code":    "error",
-							"message": "user not found",
-						}
-					}
-
-					at := AuthTokenClaims{
-						User: *user,
-						RegisteredClaims: jwt.RegisteredClaims{
-							// ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 6)),
-							ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
-						},
-					}
-
-					atoken := jwt.NewWithClaims(jwt.SigningMethodHS256, &at)
-					signedAuthToken, _ := atoken.SignedString([]byte(config.SecretCode))
-					
-
-					user.Passwd = ""
+				if auth == nil {
 					return fiber.Map{
-						"code":  "ok",
-						"accessToken": signedAuthToken,
+						"code":    "error",
+						"message": "token not found",
 					}
-
 				}
-			} else {
-				log.Println("Jwt header is broken")
+
+				if auth.Token != refreshToken {
+					return nil
+				}
+
+				if user == nil {
+					return fiber.Map{
+						"code":    "error",
+						"message": "user not found",
+					}
+				}
+
+				at := AuthTokenClaims{
+					User: *user,
+					RegisteredClaims: jwt.RegisteredClaims{
+						// ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 6)),
+						ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
+					},
+				}
+
+				atoken := jwt.NewWithClaims(jwt.SigningMethodHS256, &at)
+				signedAuthToken, _ := atoken.SignedString([]byte(config.SecretCode))
+
+				user.Passwd = ""
+				return fiber.Map{
+					"code":        "ok",
+					"accessToken": signedAuthToken,
+				}
+
 			}
 		} else {
-			log.Println("Jwt header not found")
+			log.Println("Jwt header is broken")
 		}
+	} else {
+		log.Println("Jwt header not found")
+	}
 
-		return fiber.Map{
-			"code":"error",
-			"message":"not auth",
-		}
+	return fiber.Map{
+		"code":    "error",
+		"message": "not auth",
+	}
 }
 
-
 func JwtMe(token string) fiber.Map {
-		values := token
-		if values != "" {
-			str := values
+	values := token
+	if values != "" {
+		str := values
 
-			if len(str) > 7 && str[:7] == "Bearer " {
-				token = str[7:]
+		if len(str) > 7 && str[:7] == "Bearer " {
+			token = str[7:]
 
-				claims := AuthTokenClaims{}
-				key := func(token *jwt.Token) (interface{}, error) {
-					if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-						return nil, errors.New("Unexpected Signing Method")
-					}
-					return []byte(config.SecretCode), nil
+			claims := AuthTokenClaims{}
+			key := func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, errors.New("Unexpected Signing Method")
 				}
+				return []byte(config.SecretCode), nil
+			}
 
-				_, err := jwt.ParseWithClaims(token, &claims, key)
-				if err == nil {
-					return fiber.Map{
-						"code":    "ok",
-						"id": claims.User.Name,
-						"username": claims.User.Email,
-						"imageUrl": "/logo/codefactory_logo.png",
-					}
+			_, err := jwt.ParseWithClaims(token, &claims, key)
+			if err == nil {
+				return fiber.Map{
+					"code":     "ok",
+					"id":       claims.User.Name,
+					"username": claims.User.Email,
+					"imageUrl": "/logo/codefactory_logo.png",
 				}
-			} else {
-				log.Println("Jwt header is broken")
 			}
 		} else {
-			log.Println("Jwt header not found")
+			log.Println("Jwt header is broken")
 		}
+	} else {
+		log.Println("Jwt header not found")
+	}
 
-		return fiber.Map{
-			"code":"error",
-			"message":"not auth",
-		}
+	return fiber.Map{
+		"code":    "error",
+		"message": "not auth",
+	}
 }
