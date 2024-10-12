@@ -17,7 +17,7 @@ var (
 func init() {
 	UploadPath = "webdata"
 	Database = "mysql"
-	Port = "9003"
+	Port = "9000"
 
 	// err := godotenv.Load()
 
