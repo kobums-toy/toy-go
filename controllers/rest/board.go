@@ -30,6 +30,12 @@ func (c *BoardController) Index(page int, pagesize int) {
 	if img != "" {
 		args = append(args, models.Where{Column: "img", Value: img, Compare: "="})
 	}
+
+	user := c.Query("user")
+	if user != "" {
+		args = append(args, models.Where{Column: "user", Value: img, Compare: "="})
+	}
+
 	startdate := c.Query("startdate")
 	enddate := c.Query("enddate")
 	if startdate != "" && enddate != "" {
