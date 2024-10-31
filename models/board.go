@@ -18,6 +18,7 @@ type Board struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 	Img     string `json:"img"`
+	User    int64  `json:"user"`
 	Date    string `json:"date"`
 
 	Extra map[string]interface{} `json:"extra"`
@@ -82,7 +83,7 @@ func (p *BoardManager) Query(query string, params ...interface{}) (*sql.Rows, er
 func (p *BoardManager) GetQeury() string {
 	ret := ""
 
-	str := "select b_id, b_title, b_content, b_img, b_date from board_tb "
+	str := "select b_id, b_title, b_content, b_img, b_user, b_date from board_tb "
 
 	if p.Index == "" {
 		ret = str
@@ -134,11 +135,11 @@ func (p *BoardManager) Insert(item *Board) error {
 	var res sql.Result
 	var err error
 	if item.Id > 0 {
-		query = "insert into board_tb (b_id, b_title, b_content, b_img, b_date) values (?, ?, ?, ?, ?)"
-		res, err = p.Exec(query, item.Id, item.Title, item.Content, item.Img, item.Date)
+		query = "insert into board_tb (b_id, b_title, b_content, b_img, b_user, b_date) values (?, ?, ?, ?, ?, ?)"
+		res, err = p.Exec(query, item.Id, item.Title, item.Content, item.Img, item.User, item.Date)
 	} else {
-		query = "insert into board_tb (b_title, b_content, b_img, b_date) values (?, ?, ?, ?)"
-		res, err = p.Exec(query, item.Title, item.Content, item.Img, item.Date)
+		query = "insert into board_tb (b_title, b_content, b_img, b_user, b_date) values (?, ?, ?, ?, ?)"
+		res, err = p.Exec(query, item.Title, item.Content, item.Img, item.User, item.Date)
 	}
 
 	if err == nil {
@@ -167,8 +168,8 @@ func (p *BoardManager) Update(item *Board) error {
 		return errors.New("Connection Error")
 	}
 
-	query := "update board_tb set b_title = ?, b_content = ?, b_img = ?, b_date = ? where b_id = ?"
-	_, err := p.Exec(query, item.Title, item.Content, item.Img, item.Date, item.Id)
+	query := "update board_tb set b_title = ?, b_content = ?, b_img = ?, b_user = ?, b_date = ? where b_id = ?"
+	_, err := p.Exec(query, item.Title, item.Content, item.Img, item.User, item.Date, item.Id)
 
 	return err
 }
@@ -196,7 +197,7 @@ func (p *BoardManager) ReadRow(rows *sql.Rows) *Board {
 	var err error
 
 	if rows.Next() {
-		err = rows.Scan(&item.Id, &item.Title, &item.Content, &item.Img, &item.Date)
+		err = rows.Scan(&item.Id, &item.Title, &item.Content, &item.Img, &item.User, &item.Date)
 	} else {
 		return nil
 	}
@@ -214,7 +215,7 @@ func (p *BoardManager) ReadRows(rows *sql.Rows) *[]Board {
 	for rows.Next() {
 		var item Board
 
-		err := rows.Scan(&item.Id, &item.Title, &item.Content, &item.Img, &item.Date)
+		err := rows.Scan(&item.Id, &item.Title, &item.Content, &item.Img, &item.User, &item.Date)
 
 		if err != nil {
 			log.Printf("ReadRows error : %v\n", err)
@@ -402,18 +403,4 @@ func (p *BoardManager) Find(args []interface{}) *[]Board {
 	defer rows.Close()
 
 	return p.ReadRows(rows)
-}
-
-func (p *BoardManager) GetByEmail(email string, args ...interface{}) *Board {
-	if email != "" {
-		args = append(args, Where{Column: "email", Value: email, Compare: "="})
-	}
-
-	items := p.Find(args)
-
-	if items != nil && len(*items) > 0 {
-		return &(*items)[0]
-	} else {
-		return nil
-	}
 }
