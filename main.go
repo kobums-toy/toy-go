@@ -27,7 +27,7 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowHeaders:     "Origin, Content-Type, Authorization, Accept",
 		AllowCredentials: true,
-		AllowOrigins:     "http://140.82.12.99:3000, http://localhost:3000",
+		AllowOrigins:     "http://140.82.12.99:3000, http://localhost:3000, http://127.0.0.1:3000",
 		AllowMethods: strings.Join([]string{
 			fiber.MethodGet,
 			fiber.MethodPost,

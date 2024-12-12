@@ -27,7 +27,11 @@ func JwtAuthRequired() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var token string
 
-		if (c.Method() == fiber.MethodPost) && c.Path() == "/api/user" {
+		if (c.Method() == fiber.MethodPost || c.Method() == fiber.MethodGet) && c.Path() == "/api/user" {
+			return c.Next()
+		}
+
+		if (c.Method() == fiber.MethodPost || c.Method() == fiber.MethodGet) && c.Path() == "/api/oauth/token" {
 			return c.Next()
 		}
 
@@ -94,41 +98,42 @@ func JwtAuth(email string, passwd string) fiber.Map {
 		},
 	}
 
-	authManager := models.NewAuthManager(conn)
-	auth := authManager.GetByUser(user.Id)
+	// authManager := models.NewAuthManager(conn)
+	// auth := authManager.GetByUser(user.Id)
 
-	rt := RefreshTokenClaims{
-		UserId: user.Id,
-		Email:  user.Email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
-			// ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
-		},
-	}
+	// rt := RefreshTokenClaims{
+	// 	UserId: user.Id,
+	// 	Email:  user.Email,
+	// 	RegisteredClaims: jwt.RegisteredClaims{
+	// 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
+	// 		// ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
+	// 	},
+	// }
 
 	atoken := jwt.NewWithClaims(jwt.SigningMethodHS256, &at)
 	signedAuthToken, _ := atoken.SignedString([]byte(config.SecretCode))
 
-	rtoken := jwt.NewWithClaims(jwt.SigningMethodHS256, &rt)
-	signedRefreshToken, _ := rtoken.SignedString([]byte(config.SecretCode))
+	// rtoken := jwt.NewWithClaims(jwt.SigningMethodHS256, &rt)
+	// signedRefreshToken, _ := rtoken.SignedString([]byte(config.SecretCode))
 
-	refreshTokenItem := models.Auth{
-		User:  user.Id,
-		Token: signedRefreshToken,
-	}
+	// refreshTokenItem := models.Auth{
+	// 	User:  user.Id,
+	// 	Token: signedRefreshToken,
+	// }
 
-	if auth == nil {
-		authManager.Insert(&refreshTokenItem)
-	} else {
-		refreshTokenItem.Id = auth.Id
-		authManager.Update(&refreshTokenItem)
-	}
+	// if auth == nil {
+	// 	authManager.Insert(&refreshTokenItem)
+	// } else {
+	// 	refreshTokenItem.Id = auth.Id
+	// 	authManager.Update(&refreshTokenItem)
+	// }
 
 	user.Passwd = ""
 	return fiber.Map{
-		"code":         "ok",
-		"accessToken":  signedAuthToken,
-		"refreshToken": signedRefreshToken,
+		"code":        "ok",
+		"accessToken": signedAuthToken,
+		"user":        user,
+		// "refreshToken": signedRefreshToken,
 	}
 }
 
@@ -227,8 +232,9 @@ func JwtMe(token string) fiber.Map {
 			if err == nil {
 				return fiber.Map{
 					"code":     "ok",
-					"id":       claims.User.Name,
-					"username": claims.User.Email,
+					"id":       claims.User.Id,
+					"name":     claims.User.Name,
+					"email":    claims.User.Email,
 					"imageUrl": "/logo/codefactory_logo.png",
 				}
 			}
@@ -243,4 +249,34 @@ func JwtMe(token string) fiber.Map {
 		"code":    "error",
 		"message": "not auth",
 	}
+}
+
+// GenerateAuthResponse JWT 토큰 생성 및 응답 설정
+func GenerateAuthResponse(c *fiber.Ctx, user *models.User, message string) error {
+	// JWT 클레임 생성
+	claims := AuthTokenClaims{
+		User: *user,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 6)), // 유효기간 6시간
+		},
+	}
+
+	// JWT 토큰 생성
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
+	signedToken, err := token.SignedString([]byte(config.SecretCode))
+	if err != nil {
+		log.Printf("Error signing JWT: %v\n", err)
+		return c.JSON(fiber.Map{
+			"code":    "error",
+			"message": "Failed to generate JWT",
+		})
+	}
+
+	// 성공 응답 반환
+	return c.JSON(fiber.Map{
+		"code":        "success",
+		"message":     message,
+		"accessToken": signedToken,
+		"user":        user,
+	})
 }
