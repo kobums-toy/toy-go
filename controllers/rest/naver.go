@@ -10,18 +10,19 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-type KakaoController struct {
+type NaverController struct {
 	controllers.Controller
 }
 
-func (c *KakaoController) Index() {
+func (c *NaverController) Index() {
 	ClientID := c.Query("client_id")
 	ClientSecret := c.Query("client_secret")
 	GrantType := c.Query("grant_type")
 	RedirectURI := c.Query("redirect_uri")
 	AuthorizationCode := c.Query("code")
+	AuthorizationState := c.Query("state")
 
-	log.Println(ClientID, ClientSecret, GrantType, RedirectURI, AuthorizationCode)
+	log.Println(ClientID, ClientSecret, GrantType, RedirectURI, AuthorizationCode, AuthorizationState)
 
 	client := resty.New()
 	resp, err := client.R().
@@ -31,32 +32,33 @@ func (c *KakaoController) Index() {
 			"grant_type":    GrantType,
 			"redirect_uri":  RedirectURI,
 			"code":          AuthorizationCode,
+			"state":         AuthorizationState,
 		}).
-		Post("https://kauth.kakao.com/oauth/token")
+		Post("https://nid.naver.com/oauth2.0/token")
 
 	if err != nil {
-		log.Println("Error communicating with Kakao API:", err)
+		log.Println("Error communicating with Naver API:", err)
 	}
-	var tokenResponse models.KakaoTokenResponse
+	var tokenResponse models.NaverTokenResponse
 	if err := json.Unmarshal(resp.Body(), &tokenResponse); err != nil {
 		log.Fatal("Error parsing JSON response:", err)
 	}
 
-	c.KakaoUserApi(tokenResponse.AccessToken)
+	c.NaverUserApi(tokenResponse.AccessToken)
 }
 
-func (c *KakaoController) KakaoUserApi(AccessToken string) {
+func (c *NaverController) NaverUserApi(AccessToken string) {
 	client := resty.New()
 	resp, err := client.R().
 		SetHeader("Authorization", "Bearer "+AccessToken).
-		Post("https://kapi.kakao.com/v2/user/me")
+		Post("https://openapi.naver.com/v1/nid/me")
 
 	if err != nil {
-		log.Println("Error communicating with Kakao API:", err)
+		log.Println("Error communicating with Naver API:", err)
 	}
 
-	var kakaoResp models.KakaoResponse
-	if err := json.Unmarshal(resp.Body(), &kakaoResp); err != nil {
+	var naverResp models.NaverResponse
+	if err := json.Unmarshal(resp.Body(), &naverResp); err != nil {
 		log.Fatalf("JSON Unmarshal Error: %v", err)
 	}
 
@@ -64,7 +66,7 @@ func (c *KakaoController) KakaoUserApi(AccessToken string) {
 	manager := models.NewUserManager(conn)
 
 	// 카카오에서 반환된 이메일로 사용자 조회
-	existingUser := manager.GetByEmail(kakaoResp.KakaoAccount.Email)
+	existingUser := manager.GetByEmail(naverResp.Response.Email)
 
 	if existingUser != nil {
 		// JWT 토큰 생성
@@ -85,8 +87,8 @@ func (c *KakaoController) KakaoUserApi(AccessToken string) {
 	// 사용자가 없는 경우 새 사용자 생성
 	newUser := &models.User{
 		Passwd: "qwer1234!!",
-		Name:   kakaoResp.KakaoAccount.Name,
-		Email:  kakaoResp.KakaoAccount.Email,
+		Name:   naverResp.Response.Name,
+		Email:  naverResp.Response.Email,
 	}
 
 	if err := manager.Insert(newUser); err != nil {

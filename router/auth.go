@@ -35,6 +35,10 @@ func JwtAuthRequired() fiber.Handler {
 			return c.Next()
 		}
 
+		if (c.Method() == fiber.MethodPost || c.Method() == fiber.MethodGet) && c.Path() == "/api/oauth/naver" {
+			return c.Next()
+		}
+
 		values := c.Get("Authorization")
 		if values != "" {
 			str := values
