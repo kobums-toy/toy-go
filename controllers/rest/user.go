@@ -100,3 +100,13 @@ func (c *UserController) Delete(item *models.User) {
 	manager := models.NewUserManager(conn)
 	manager.Delete(item.Id)
 }
+
+func (c *UserController) GetByEmail(email string) *models.User {
+	conn := c.NewConnection()
+
+	manager := models.NewUserManager(conn)
+	item := manager.GetByEmail(email)
+	c.Set("item", item)
+
+	return item
+}

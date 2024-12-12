@@ -81,6 +81,14 @@ func SetRouter(app *fiber.App) {
 	})
 	apiGroup.Use(JwtAuthRequired())
 	{
+		apiGroup.Get("/oauth/token", func(ctx *fiber.Ctx) error {
+			var controller rest.KakaoController
+			controller.Init(ctx)
+			controller.Index()
+			controller.Close()
+			return ctx.JSON(controller.Result)
+		})
+
 		apiGroup.Get("/user/:id", func(ctx *fiber.Ctx) error {
 			id_, _ := strconv.ParseInt(ctx.Params("id"), 10, 64)
 			var controller rest.UserController
