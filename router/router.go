@@ -97,6 +97,14 @@ func SetRouter(app *fiber.App) {
 			return ctx.JSON(controller.Result)
 		})
 
+		apiGroup.Get("/oauth/google", func(ctx *fiber.Ctx) error {
+			var controller rest.GoogleController
+			controller.Init(ctx)
+			controller.Index()
+			controller.Close()
+			return ctx.JSON(controller.Result)
+		})
+
 		apiGroup.Get("/user/:id", func(ctx *fiber.Ctx) error {
 			id_, _ := strconv.ParseInt(ctx.Params("id"), 10, 64)
 			var controller rest.UserController
