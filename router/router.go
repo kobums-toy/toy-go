@@ -2,10 +2,12 @@ package router
 
 import (
 	"strconv"
+	"toysgo/controllers/p2p"
 	"toysgo/controllers/rest"
 	"toysgo/models"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 )
 
 func SetRouter(app *fiber.App) {
@@ -18,6 +20,7 @@ func SetRouter(app *fiber.App) {
 		token := ctx.Get("Authorization")
 		return ctx.JSON(JwtToken(token))
 	})
+	app.Get("/p2p/ws", websocket.New(p2p.WebSocketHandler))
 	apiGroup := app.Group("/api")
 	apiGroup.Get("/board/:id", func(ctx *fiber.Ctx) error {
 		id_, _ := strconv.ParseInt(ctx.Params("id"), 10, 64)
