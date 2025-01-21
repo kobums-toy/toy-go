@@ -74,19 +74,25 @@ STUN/TURN을 사용하여 NAT 및 방화벽을 넘어 원활한 P2P 연결을 �
 
 설치 방법
 
-백엔드
+## 백엔드
 
-1. 의존성 설치:
+1. **의존성 설치**
 
-   go mod tidy
+```bash
+ go mod tidy
+```
 
-2. 서버 실행:
+2. **서버 실행**
 
-   go run main.go
+```bash
+ go run main.go
+```
 
-3. 기본 서버 URL:
+3. **기본 서버 URL**
 
-   http://localhost:9000
+```bash
+ http://localhost:9000
+```
 
 사용 방법 1. 방송 송출
 • 송출자 페이지 접속
@@ -100,3 +106,5 @@ STUN/TURN을 사용하여 NAT 및 방화벽을 넘어 원활한 P2P 연결을 �
 • WebSocket 로그를 확인하여 연결 문제 디버깅 가능
 
 Author: 다양한 기능 테스트 및 학습 목적으로 작성된 예제 프로젝트.
+
+아래처럼 코드 블록과 번호 목록을 적절히 혼합하여 깔끔하게 표시해 보세요:
