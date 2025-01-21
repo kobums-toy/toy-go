@@ -47,6 +47,10 @@ func JwtAuthRequired() fiber.Handler {
 			return c.Next()
 		}
 
+		if (c.Method() == fiber.MethodPost || c.Method() == fiber.MethodGet) && c.Path() == "/p2p/webrtc" {
+			return c.Next()
+		}
+
 		values := c.Get("Authorization")
 		if values != "" {
 			str := values

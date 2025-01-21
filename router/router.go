@@ -5,6 +5,7 @@ import (
 	"toysgo/controllers/p2p"
 	"toysgo/controllers/rest"
 	"toysgo/models"
+	"toysgo/services"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
@@ -20,7 +21,21 @@ func SetRouter(app *fiber.App) {
 		token := ctx.Get("Authorization")
 		return ctx.JSON(JwtToken(token))
 	})
-	app.Get("/p2p/ws", websocket.New(p2p.WebSocketHandler))
+	app.Get("/p2p/webrtc", websocket.New(p2p.WebSocketHandler))
+
+	webSocketService := services.NewWebSocketService()
+
+	app.Get("/p2p/ws", websocket.New(func(conn *websocket.Conn) {
+		// WebSocket 연결 처리
+		role := conn.Query("role")
+		if role == "broadcaster" {
+			webSocketService.SetBroadcaster(conn)
+		} else if role == "viewer" {
+			webSocketService.AddViewer(conn)
+		} else {
+			conn.Close()
+		}
+	}))
 	apiGroup := app.Group("/api")
 	apiGroup.Get("/board/:id", func(ctx *fiber.Ctx) error {
 		id_, _ := strconv.ParseInt(ctx.Params("id"), 10, 64)
