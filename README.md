@@ -74,33 +74,19 @@ STUN/TURN을 사용하여 NAT 및 방화벽을 넘어 원활한 P2P 연결을 �
 
 설치 방법
 
-백엔드 1. 의존성 설치:
+백엔드
 
-go mod tidy
+1. 의존성 설치:
 
-    2.	서버 실행:
+   go mod tidy
 
-go run main.go
+2. 서버 실행:
 
-    3.	기본 서버 URL:
+   go run main.go
 
-http://localhost:9000
+3. 기본 서버 URL:
 
-프론트엔드 1. 프론트엔드 디렉토리로 이동:
-
-cd frontend
-
-    2.	의존성 설치:
-
-npm install
-
-    3.	React 앱 실행:
-
-npm start
-
-    4.	웹 앱 주소:
-
-http://localhost:3000
+   http://localhost:9000
 
 사용 방법 1. 방송 송출
 • 송출자 페이지 접속
