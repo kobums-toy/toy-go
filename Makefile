@@ -15,7 +15,8 @@ run:
 
 allrun:
 	fswatch -0 controllers | xargs -0 -n1 build/notify.sh &
-	gin --port 9000 -a 9003 --bin bin/toysgo run main.go
+	# gin --port 9000 -a 9003 --bin bin/toysgo run main.go
+	go run .
 
 test: dummy
 	go test -v ./...

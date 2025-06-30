@@ -9,22 +9,24 @@ import (
 )
 
 type WebSocketService struct {
-	Broadcaster *websocket.Conn
-	Viewers     []*websocket.Conn
-	Mutex       sync.Mutex
+	Broadcaster  *websocket.Conn
+	Viewers      map[*websocket.Conn]string
+	PendingOffer map[*websocket.Conn]bool
+	Mutex        sync.Mutex
 }
 
 func NewWebSocketService() *WebSocketService {
 	return &WebSocketService{
-		Viewers: make([]*websocket.Conn, 0),
+		Viewers:      make(map[*websocket.Conn]string),
+		PendingOffer: make(map[*websocket.Conn]bool),
 	}
 }
 
 func (wsService *WebSocketService) SetBroadcaster(conn *websocket.Conn) {
 	wsService.Mutex.Lock()
-	defer wsService.Mutex.Unlock()
-
 	wsService.Broadcaster = conn
+	wsService.Mutex.Unlock()
+	
 	fmt.Println("송출자가 연결되었습니다.")
 
 	defer func() {
@@ -43,7 +45,6 @@ func (wsService *WebSocketService) SetBroadcaster(conn *websocket.Conn) {
 		}
 
 		fmt.Printf("송출자로부터 메시지 수신: %s\n", string(message))
-		wsService.BroadcastToViewers(messageType, message)
 
 		var parsedMessage map[string]interface{}
 		err = json.Unmarshal(message, &parsedMessage)
@@ -53,12 +54,31 @@ func (wsService *WebSocketService) SetBroadcaster(conn *websocket.Conn) {
 			continue
 		}
 		fmt.Printf("디코딩된 메시지: %+v\n", parsedMessage)
+
+		fmt.Printf("디코딩된 메시지 type 필드 값: %#v\n", parsedMessage["type"])
+		if msgType, ok := parsedMessage["type"].(string); ok && msgType == "offer" {
+			wsService.Mutex.Lock()
+			for viewer := range wsService.PendingOffer {
+				err := viewer.WriteMessage(messageType, message)
+				if err != nil {
+					fmt.Println("offer 전달 실패:", err)
+				} else {
+					fmt.Println("offer 전달 성공")
+				}
+				delete(wsService.PendingOffer, viewer)
+				break
+			}
+			wsService.Mutex.Unlock()
+		} else {
+			wsService.BroadcastToViewers(messageType, message)
+		}
 	}
 }
 
 func (wsService *WebSocketService) AddViewer(conn *websocket.Conn) {
+	peerID := conn.Query("peer_id")
 	wsService.Mutex.Lock()
-	wsService.Viewers = append(wsService.Viewers, conn)
+	wsService.Viewers[conn] = peerID
 	wsService.Mutex.Unlock()
 
 	fmt.Println("시청자가 연결되었습니다.")
@@ -84,6 +104,7 @@ func (wsService *WebSocketService) AddViewer(conn *websocket.Conn) {
 		case "request_stream":
 			fmt.Println("시청자가 스트림을 요청했습니다.")
 			wsService.Mutex.Lock()
+			wsService.PendingOffer[conn] = true
 			if wsService.Broadcaster != nil {
 				err := wsService.Broadcaster.WriteMessage(messageType, []byte(`{"type":"offer_request"}`))
 				if err != nil {
@@ -112,7 +133,7 @@ func (wsService *WebSocketService) BroadcastToViewers(messageType int, message [
 	wsService.Mutex.Lock()
 	defer wsService.Mutex.Unlock()
 
-	for _, viewer := range wsService.Viewers {
+	for viewer := range wsService.Viewers {
 		if err := viewer.WriteMessage(messageType, message); err != nil {
 			fmt.Println("시청자에게 메시지 전달 실패:", err)
 		} else {
@@ -140,10 +161,6 @@ func (wsService *WebSocketService) RemoveViewer(conn *websocket.Conn) {
 	wsService.Mutex.Lock()
 	defer wsService.Mutex.Unlock()
 
-	for i, viewer := range wsService.Viewers {
-		if viewer == conn {
-			wsService.Viewers = append(wsService.Viewers[:i], wsService.Viewers[i+1:]...)
-			break
-		}
-	}
+	delete(wsService.Viewers, conn)
+	delete(wsService.PendingOffer, conn)
 }

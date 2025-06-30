@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"strconv"
 	"toysgo/controllers/p2p"
 	"toysgo/controllers/rest"
@@ -28,12 +29,14 @@ func SetRouter(app *fiber.App) {
 	app.Get("/p2p/ws", websocket.New(func(conn *websocket.Conn) {
 		// WebSocket 연결 처리
 		role := conn.Query("role")
-		if role == "broadcaster" {
-			webSocketService.SetBroadcaster(conn)
-		} else if role == "viewer" {
-			webSocketService.AddViewer(conn)
-		} else {
-			conn.Close()
+		switch role {
+			case "broadcaster":
+				fmt.Println("aaa");
+				webSocketService.SetBroadcaster(conn)
+			case "viewer":
+				webSocketService.AddViewer(conn)
+			default:
+				conn.Close()
 		}
 	}))
 	apiGroup := app.Group("/api")
