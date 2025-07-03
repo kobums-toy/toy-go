@@ -26,20 +26,88 @@ func SetRouter(app *fiber.App) {
 
 	webSocketService := services.NewWebSocketService()
 
+	
 	app.Get("/p2p/ws", websocket.New(func(conn *websocket.Conn) {
-		// WebSocket 연결 처리
-		role := conn.Query("role")
-		switch role {
-			case "broadcaster":
-				fmt.Println("aaa");
-				webSocketService.SetBroadcaster(conn)
-			case "viewer":
-				webSocketService.AddViewer(conn)
-			default:
-				conn.Close()
-		}
-	}))
+	// 쿼리 파라미터 추출 및 로깅
+	role := conn.Query("role")
+	userID := conn.Query("user_id")
+	userName := conn.Query("user_name")
+	broadcasterID := conn.Query("broadcaster_id")
+
+	fmt.Printf("🔗 새 WebSocket 연결 요청\n")
+	fmt.Printf("  - Role: %s\n", role)
+	fmt.Printf("  - User ID: %s\n", userID)
+	fmt.Printf("  - User Name: %s\n", userName)
+	fmt.Printf("  - Broadcaster ID: %s\n", broadcasterID)
+
+	// 필수 파라미터 검증
+	if userID == "" {
+		fmt.Printf("❌ 연결 거부: user_id 누락\n")
+		conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"error","data":"user_id가 필요합니다"}`))
+		conn.Close()
+		return
+	}
+
+	// 역할별 처리
+	switch role {
+	case "broadcaster":
+		fmt.Printf("✅ 방송자 핸들러로 연결: %s (%s)\n", userName, userID)
+		webSocketService.HandleBroadcaster(conn)
+
+	case "viewer":
+		fmt.Printf("✅ 시청자 핸들러로 연결: %s (%s)\n", userName, userID)
+		webSocketService.HandleViewer(conn)
+
+	case "viewer_list":
+		fmt.Printf("✅ 목록 구독자 핸들러로 연결: %s\n", userID)
+		webSocketService.HandleViewerList(conn)
+
+	default:
+		fmt.Printf("❌ 알 수 없는 역할: %s\n", role)
+		conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"error","data":"유효하지 않은 역할입니다"}`))
+		conn.Close()
+	}
+}))
+
 	apiGroup := app.Group("/api")
+	// 1. 현재 방송 목록 조회
+	apiGroup.Get("/broadcasts", func(c *fiber.Ctx) error {
+		broadcasts := webSocketService.GetActiveBroadcasts()
+		return c.JSON(fiber.Map{
+			"success": true,
+			"count":   len(broadcasts),
+			"data":    broadcasts,
+		})
+	})
+
+
+	// 2. 서버 상태 조회 (전체 통계)
+	apiGroup.Get("/status", func(c *fiber.Ctx) error {
+		status := webSocketService.GetServerStatus()
+		return c.JSON(fiber.Map{
+			"success": true,
+			"data":    status,
+		})
+	})
+
+	// 3. 특정 방송 상세 정보
+	apiGroup.Get("/broadcasts/:broadcaster_id", func(c *fiber.Ctx) error {
+		broadcasterID := c.Params("broadcaster_id")
+		stats := webSocketService.GetBroadcastStats(broadcasterID)
+		
+		if _, exists := stats["error"]; exists {
+			return c.Status(404).JSON(fiber.Map{
+				"success": false,
+				"error":   stats["error"],
+			})
+		}
+		
+		return c.JSON(fiber.Map{
+			"success": true,
+			"data":    stats,
+		})
+	})
+
 	apiGroup.Get("/board/:id", func(ctx *fiber.Ctx) error {
 		id_, _ := strconv.ParseInt(ctx.Params("id"), 10, 64)
 		var controller rest.BoardController
@@ -191,66 +259,5 @@ func SetRouter(app *fiber.App) {
 			controller.Close()
 			return ctx.JSON(controller.Result)
 		})
-
-		// apiGroup.Get("/board/:id", func(ctx *fiber.Ctx) error {
-		// 	id_, _ := strconv.ParseInt(ctx.Params("id"), 10, 64)
-		// 	var controller rest.BoardController
-		// 	controller.Init(ctx)
-		// 	controller.Read(id_)
-		// 	controller.Close()
-		// 	return ctx.JSON(controller.Result)
-		// })
-
-		// apiGroup.Get("/board", func(ctx *fiber.Ctx) error {
-		// 	page_, _ := strconv.Atoi(ctx.Query("page"))
-		// 	pagesize_, _ := strconv.Atoi(ctx.Query("pagesize"))
-		// 	var controller rest.BoardController
-		// 	controller.Init(ctx)
-		// 	controller.Index(page_, pagesize_)
-		// 	controller.Close()
-		// 	return ctx.JSON(controller.Result)
-		// })
-
-		// apiGroup.Post("/board", func(ctx *fiber.Ctx) error {
-		// 	item_ := &models.Board{}
-		// 	ctx.BodyParser(item_)
-		// 	var controller rest.BoardController
-		// 	controller.Init(ctx)
-		// 	if item_ != nil {
-		// 		controller.Insert(item_)
-		// 	} else {
-		// 		controller.Result["code"] = "error"
-		// 	}
-		// 	controller.Close()
-		// 	return ctx.JSON(controller.Result)
-		// })
-
-		// apiGroup.Put("/board", func(ctx *fiber.Ctx) error {
-		// 	item_ := &models.Board{}
-		// 	ctx.BodyParser(item_)
-		// 	var controller rest.BoardController
-		// 	controller.Init(ctx)
-		// 	if item_ != nil {
-		// 		controller.Update(item_)
-		// 	} else {
-		// 		controller.Result["code"] = "error"
-		// 	}
-		// 	controller.Close()
-		// 	return ctx.JSON(controller.Result)
-		// })
-
-		// apiGroup.Delete("/board", func(ctx *fiber.Ctx) error {
-		// 	item_ := &models.Board{}
-		// 	ctx.BodyParser(item_)
-		// 	var controller rest.BoardController
-		// 	controller.Init(ctx)
-		// 	if item_ != nil {
-		// 		controller.Delete(item_)
-		// 	} else {
-		// 		controller.Result["code"] = "error"
-		// 	}
-		// 	controller.Close()
-		// 	return ctx.JSON(controller.Result)
-		// })
 	}
 }
