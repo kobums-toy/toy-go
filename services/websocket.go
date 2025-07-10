@@ -421,13 +421,37 @@ func (wsService *WebSocketService) stopBroadcast(broadcasterID string) {
 	delete(wsService.ActiveBroadcasts, broadcasterID)
 	fmt.Printf("⚫ 방송 종료: %s (%s)\n", broadcast.BroadcasterName, broadcasterID)
 
-	// 해당 방송의 모든 시청자 연결 해제
-	for viewerID, viewer := range wsService.Viewers {
+	// 해당 방송의 모든 시청자에게 방송 종료 알림 전송
+	broadcastEndMsg := &Message{
+		Type:          "broadcast_ended",
+		BroadcasterID: broadcasterID,
+		Broadcast:     broadcast,
+	}
+	
+	notifiedViewers := 0
+	for _, viewer := range wsService.Viewers {
 		if viewer.BroadcasterID == broadcasterID {
-			viewer.Connection.Conn.Close()
-			delete(wsService.Viewers, viewerID)
+			// 방송 종료 알림 전송
+			wsService.sendToConnection(viewer.Connection.Conn, broadcastEndMsg)
+			notifiedViewers++
 		}
 	}
+	fmt.Printf("📺 방송 %s 종료 알림을 %d명의 시청자에게 전송\n", broadcasterID, notifiedViewers)
+
+	// 잠시 대기 후 연결 해제 (알림 전송 시간 확보)
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		wsService.Mutex.Lock()
+		defer wsService.Mutex.Unlock()
+		
+		// 해당 방송의 모든 시청자 연결 해제
+		for viewerID, viewer := range wsService.Viewers {
+			if viewer.BroadcasterID == broadcasterID {
+				viewer.Connection.Conn.Close()
+				delete(wsService.Viewers, viewerID)
+			}
+		}
+	}()
 
 	// 모든 목록 구독자에게 알림
 	wsService.broadcastToListSubscribers(&Message{
@@ -679,12 +703,31 @@ func (wsService *WebSocketService) handleViewerLeave(viewerID string, msg *Messa
 	}
 	wsService.sendToConnection(viewer.Connection.Conn, confirmMsg)
 
-	// 대기 중인 Offer 정리
+	// 시청자 완전 제거 (중복 처리 방지)
+	delete(wsService.Viewers, viewerID)
 	delete(wsService.PendingOffers, viewerID)
 }
 
 // 시청자 수 업데이트
 func (wsService *WebSocketService) updateViewerCount(broadcasterID string, count int) {
+	fmt.Println("🔄 시청자 수 업데이트:", broadcasterID, "->", count)
+	fmt.Println(broadcasterID, count)
+	
+	// 방송별 시청자 수 상세 로그
+	fmt.Printf("📊 방송별 시청자 수 현황:\n")
+	for id, broadcast := range wsService.ActiveBroadcasts {
+		actualViewers := 0
+		for _, viewer := range wsService.Viewers {
+			if viewer.BroadcasterID == id {
+				actualViewers++
+			}
+		}
+		fmt.Printf("  방송 %s (%s): 기록된 시청자 %d명, 실제 연결된 시청자 %d명\n", 
+			id, broadcast.BroadcasterName, broadcast.ViewerCount, actualViewers)
+	}
+	fmt.Printf("  총 연결된 시청자: %d명\n", len(wsService.Viewers))
+	
+	// 방송자에게 시청자 수 업데이트 전송
 	if wsService.Broadcasters[broadcasterID] != nil {
 		msg := &Message{
 			Type:  "viewer_count_update",
@@ -693,6 +736,23 @@ func (wsService *WebSocketService) updateViewerCount(broadcasterID string, count
 		wsService.sendToConnection(wsService.Broadcasters[broadcasterID].Conn, msg)
 	}
 
+	// 해당 방송의 모든 시청자에게 시청자 수 업데이트 전송
+	viewerUpdateMsg := &Message{
+		Type:          "viewer_count_update",
+		BroadcasterID: broadcasterID,
+		Count:         count,
+	}
+	
+	sentToViewers := 0
+	for _, viewer := range wsService.Viewers {
+		if viewer.BroadcasterID == broadcasterID {
+			wsService.sendToConnection(viewer.Connection.Conn, viewerUpdateMsg)
+			sentToViewers++
+		}
+	}
+	fmt.Printf("📺 방송 %s의 시청자 %d명에게 시청자 수 업데이트 전송\n", broadcasterID, sentToViewers)
+
+	// 방송목록 구독자들에게 전송
 	wsService.broadcastToListSubscribers(&Message{
 		Type:          "viewer_count_update",
 		BroadcasterID: broadcasterID,
